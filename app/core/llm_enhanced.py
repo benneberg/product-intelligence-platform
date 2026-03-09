@@ -309,21 +309,49 @@ class EnhancedLLMClient:
     Enhanced LLM client with better prompts and retry logic.
     """
 
-    def __init__(self, provider: str = "openai", model: str = None):
-        self.provider = provider
-        self.model = model or settings.OPENAI_MODEL
+    def __init__(self, provider: str = None, model: str = None):
+        self.provider = provider or settings.LLM_PROVIDER
+        self.model = model
         self.prompt_builder = LLMPromptBuilder()
         self.client = None
 
     async def initialize(self):
         """Initialize the LLM client."""
+
         if self.provider == "openai" and settings.OPENAI_API_KEY:
-            try:
-                import openai
-                openai.api_key = settings.OPENAI_API_KEY
-                self.client = openai
-            except ImportError:
-                logger.warning("OpenAI package not installed")
+            from openai import AsyncOpenAI
+
+            self.client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+            self.model = self.model or settings.OPENAI_MODEL
+
+        elif self.provider == "groq" and settings.GROQ_API_KEY:
+            from openai import AsyncOpenAI
+
+            self.client = AsyncOpenAI(
+                api_key=settings.GROQ_API_KEY,
+                base_url="https://api.groq.com/openai/v1",
+            )
+
+            self.model = self.model or settings.GROQ_MODEL
+
+        elif self.provider == "openrouter" and settings.OPENROUTER_API_KEY:
+            from openai import AsyncOpenAI
+
+            self.client = AsyncOpenAI(
+                api_key=settings.OPENROUTER_API_KEY,
+                base_url="https://openrouter.ai/api/v1",
+            )
+
+            self.model = self.model or settings.OPENROUTER_MODEL
+
+        elif self.provider == "anthropic" and settings.ANTHROPIC_API_KEY:
+            import anthropic
+
+            self.client = anthropic.AsyncAnthropic(
+                api_key=settings.ANTHROPIC_API_KEY
+            )
+
+            self.model = self.model or settings.ANTHROPIC_MODEL
 
     async def decide(
         self,
@@ -378,12 +406,15 @@ class EnhancedLLMClient:
 
     async def _make_request(self, system: str, user: str) -> str:
         """Make request to LLM."""
+
         if not self.client:
             return self._mock_response(user)
 
         try:
-            if self.provider == "openai":
-                response = await self.client.ChatCompletion.acreate(
+
+            if self.provider in ["openai", "groq", "openrouter"]:
+
+                response = await self.client.chat.completions.create(
                     model=self.model,
                     messages=[
                         {"role": "system", "content": system},
@@ -392,7 +423,20 @@ class EnhancedLLMClient:
                     temperature=0.7,
                     max_tokens=500,
                 )
+
                 return response.choices[0].message.content
+
+            elif self.provider == "anthropic":
+
+                response = await self.client.messages.create(
+                    model=self.model,
+                    max_tokens=500,
+                    temperature=0.7,
+                    system=system,
+                    messages=[{"role": "user", "content": user}],
+                )
+
+                return response.content[0].text
 
         except Exception as e:
             logger.error(f"LLM request failed: {str(e)}")

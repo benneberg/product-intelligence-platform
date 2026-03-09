@@ -1,7 +1,4 @@
 # Product Intelligence Platform - Docker Compose Configuration
-
-version: '3.8'
-
 services:
   # PostgreSQL Database
   postgres:

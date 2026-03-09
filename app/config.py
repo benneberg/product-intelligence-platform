@@ -65,6 +65,17 @@ class Settings(BaseSettings):
     ANTHROPIC_API_KEY: Optional[str] = None
     ANTHROPIC_MODEL: str = "claude-3-sonnet-20240229"
 
+    # AI Configuration (Groq)
+    GROQ_API_KEY: Optional[str] = None
+    GROQ_MODEL: str = "llama3-70b-8192"
+
+    # AI Configuration (OpenRouter)
+    OPENROUTER_API_KEY: Optional[str] = None
+    OPENROUTER_MODEL: str = "meta-llama/llama-3-70b-instruct"
+
+    # Provider selection
+    LLM_PROVIDER: str = "openai"
+
     # Simulation Settings
     MAX_STEPS: int = 50
     MAX_DURATION_SECONDS: int = 900

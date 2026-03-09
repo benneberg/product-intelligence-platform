@@ -31,22 +31,41 @@ class LLMClient:
 
     async def initialize(self):
         """Initialize the LLM client."""
+
         if self.provider == "openai" and settings.OPENAI_API_KEY:
-            try:
-                import openai
-                openai.api_key = settings.OPENAI_API_KEY
-                self.client = openai
-                logger.info("OpenAI client initialized")
-            except ImportError:
-                logger.warning("OpenAI package not installed")
+            import openai
+            openai.api_key = settings.OPENAI_API_KEY
+            self.client = openai
 
         elif self.provider == "anthropic" and settings.ANTHROPIC_API_KEY:
-            try:
-                import anthropic
-                self.client = anthropic.Anthropic(api_key=settings.ANTHROPIC_API_KEY)
-                logger.info("Anthropic client initialized")
-            except ImportError:
-                logger.warning("Anthropic package not installed")
+            import anthropic
+            self.client = anthropic.Anthropic(api_key=settings.ANTHROPIC_API_KEY)
+
+        elif self.provider == "groq" and settings.GROQ_API_KEY:
+            from openai import AsyncOpenAI
+
+            self.client = AsyncOpenAI(
+                api_key=settings.GROQ_API_KEY,
+                base_url="https://api.groq.com/openai/v1",
+            )
+
+            self.model = settings.GROQ_MODEL
+
+        elif self.provider == "openrouter" and settings.OPENROUTER_API_KEY:
+            from openai import AsyncOpenAI
+
+            self.client = AsyncOpenAI(
+                api_key=settings.OPENROUTER_API_KEY,
+                base_url="https://openrouter.ai/api/v1",
+                default_headers={
+                    "HTTP-Referer": "http://localhost",
+                    "X-Title": "Product Intelligence Platform",
+                },
+            )
+
+            self.model = settings.OPENROUTER_MODEL
+
+        logger.info(f"LLM provider initialized: {self.provider}")
 
     async def complete(
         self,
@@ -112,7 +131,23 @@ class LLMClient:
                         "output_tokens": response.usage.output_tokens,
                     },
                 }
+            elif self.provider in ["groq", "openrouter"] and self.client:
 
+                response = await self.client.chat.completions.create(
+                    model=self.model,
+                    messages=[
+                        {"role": "system", "content": system_prompt or self._default_system_prompt()},
+                        {"role": "user", "content": prompt},
+                    ],
+                    temperature=temp,
+                    max_tokens=tokens,
+                )
+
+                return {
+                    "text": response.choices[0].message.content,
+                    "model": response.model,
+                    "usage": response.usage.model_dump() if response.usage else {},
+                }
             else:
                 # Fallback - return a mock response for testing
                 logger.warning("No LLM client available, returning mock response")

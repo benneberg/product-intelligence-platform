@@ -1,6 +1,6 @@
 # Product Intelligence Platform - Worker Dockerfile
 
-FROM python:3.11-slim
+FROM mcr.microsoft.com/playwright/python:v1.43.0-jammy
 
 # Set working directory
 WORKDIR /app
