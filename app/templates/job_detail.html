@@ -1,0 +1,144 @@
+{% extends "layout.html" %}
+
+{% block title %}Job {{ job.id }} - Product Intelligence Platform{% endblock %}
+
+{% block header %}Job Details{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Job Info Card -->
+    <div class="card p-6">
+        <div class="flex items-start justify-between">
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900">Analysis Job</h3>
+                <p class="text-sm text-gray-500 mt-1">Target: {{ job.url }}</p>
+            </div>
+            <span class="status-badge status-{{ job.status }}" id="statusBadge">{{ job.status }}</span>
+        </div>
+
+        <div class="grid grid-cols-4 gap-4 mt-6">
+            <div>
+                <p class="text-sm text-gray-500">Persona</p>
+                <p class="font-medium text-gray-900">{{ job.persona }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-500">Created</p>
+                <p class="font-medium text-gray-900">{{ job.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-500">Started</p>
+                <p class="font-medium text-gray-900">{% if job.started_at %}{{ job.started_at.strftime('%Y-%m-%d %H:%M') }}{% else %}Not started{% endif %}</p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-500">Completed</p>
+                <p class="font-medium text-gray-900">{% if job.completed_at %}{{ job.completed_at.strftime('%Y-%m-%d %H:%M') }}{% else %}In progress{% endif %}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Section (for pending/running jobs) -->
+    {% if job.status in ['pending', 'processing'] %}
+    <div class="card p-6" id="progressSection">
+        <div class="flex items-center justify-between mb-4">
+            <h4 class="text-sm font-medium text-gray-900">Simulation Progress</h4>
+            <span class="text-sm text-gray-500" id="progressText">Initializing...</span>
+        </div>
+
+        <div class="w-full bg-gray-200 rounded-full h-2">
+            <div id="progressBar" class="bg-indigo-600 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+        </div>
+
+        <div class="mt-4 p-4 bg-gray-50 rounded-lg font-mono text-sm text-gray-600 max-h-48 overflow-y-auto" id="logContainer">
+            <p class="text-gray-400">Waiting for simulation to start...</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Action Buttons -->
+    <div class="flex items-center gap-4">
+        {% if job.status == 'completed' %}
+        <a href="/jobs/{{ job.id }}/report" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-medium">
+            View Full Report
+        </a>
+        {% endif %}
+
+        <a href="/jobs/new" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
+            New Analysis
+        </a>
+
+        <a href="/jobs" class="px-6 py-2 text-gray-600 hover:text-gray-900 transition">
+            All Jobs
+        </a>
+    </div>
+
+    <!-- Error Message -->
+    {% if job.status == 'failed' and job.error_message %}
+    <div class="card p-6 border-red-200 bg-red-50">
+        <h4 class="text-sm font-semibold text-red-900 mb-2">Error</h4>
+        <p class="text-sm text-red-800">{{ job.error_message }}</p>
+    </div>
+    {% endif %}
+
+    <!-- Summary (for completed jobs) -->
+    {% if job.status == 'completed' and job.summary %}
+    <div class="card p-6">
+        <h4 class="text-sm font-medium text-gray-900 mb-2">Summary</h4>
+        <p class="text-sm text-gray-600">{{ job.summary }}</p>
+    </div>
+    {% endif %}
+</div>
+
+{% block scripts %}
+{% if job.status in ['pending', 'processing'] %}
+<script>
+    const jobId = '{{ job.id }}';
+    let lastStatus = '{{ job.status }}';
+
+    function updateProgress() {
+        fetch('/api/v1/jobs/' + jobId)
+            .then(response => response.json())
+            .then(data => {
+                const statusBadge = document.getElementById('statusBadge');
+                statusBadge.textContent = data.status;
+                statusBadge.className = 'status-badge status-' + data.status;
+
+                // Update progress bar
+                const progressBar = document.getElementById('progressBar');
+                const progressText = document.getElementById('progressText');
+
+                if (data.status === 'pending') {
+                    progressText.textContent = 'Queued...';
+                    progressBar.style.width = '10%';
+                } else if (data.status === 'processing') {
+                    progressText.textContent = 'Running...';
+                    progressBar.style.width = '50%';
+                } else if (data.status === 'completed') {
+                    progressText.textContent = 'Completed!';
+                    progressBar.style.width = '100%';
+                    progressBar.classList.remove('bg-indigo-600');
+                    progressBar.classList.add('bg-green-600');
+                    setTimeout(() => {
+                        window.location.href = '/jobs/' + jobId + '/report';
+                    }, 1000);
+                } else if (data.status === 'failed') {
+                    progressText.textContent = 'Failed';
+                    progressBar.classList.remove('bg-indigo-600');
+                    progressBar.classList.add('bg-red-600');
+                }
+
+                lastStatus = data.status;
+            })
+            .catch(error => {
+                console.error('Error fetching job status:', error);
+            });
+    }
+
+    // Poll every 2 seconds
+    setInterval(updateProgress, 2000);
+
+    // Initial update
+    updateProgress();
+</script>
+{% endif %}
+{% endblock %}
+{% endblock %}

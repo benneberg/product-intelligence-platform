@@ -1,0 +1,182 @@
+{% extends "layout.html" %}
+
+{% block title %}New Analysis - Product Intelligence Platform{% endblock %}
+
+{% block header %}New Analysis{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl">
+    <div class="card">
+        <div class="p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-6">Start a New Analysis</h3>
+
+            <form id="analysisForm" class="space-y-6">
+                <!-- Target URL -->
+                <div>
+                    <label for="url" class="block text-sm font-medium text-gray-700 mb-2">
+                        Target URL <span class="text-red-500">*</span>
+                    </label>
+                    <input
+                        type="url"
+                        id="url"
+                        name="url"
+                        required
+                        placeholder="https://example.com"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
+                    >
+                    <p class="mt-1 text-sm text-gray-500">Enter the URL of the website you want to analyze</p>
+                </div>
+
+                <!-- Persona Selection -->
+                <div>
+                    <label for="persona" class="block text-sm font-medium text-gray-700 mb-2">
+                        User Persona
+                    </label>
+                    <select
+                        id="persona"
+                        name="persona"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
+                    >
+                        <option value="curious_beginner">Curious Beginner - Explores carefully, reads content</option>
+                        <option value="impatient_shopper">Impatient Shopper - Quick decisions, skips reading</option>
+                        <option value="careful_researcher">Careful Researcher - Thorough, compares options</option>
+                    </select>
+                    <p class="mt-1 text-sm text-gray-500">Choose the type of user behavior to simulate</p>
+                </div>
+
+                <!-- Task Template -->
+                <div>
+                    <label for="task_template" class="block text-sm font-medium text-gray-700 mb-2">
+                        Task Goal
+                    </label>
+                    <textarea
+                        id="task_template"
+                        name="task_template"
+                        rows="3"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
+                        placeholder="Explore the site and attempt to sign up for an account"
+                    >Explore and attempt signup</textarea>
+                    <p class="mt-1 text-sm text-gray-500">Describe what the synthetic user should try to accomplish</p>
+                </div>
+
+                <!-- Advanced Settings -->
+                <div class="border-t border-gray-200 pt-6">
+                    <h4 class="text-sm font-medium text-gray-900 mb-4">Advanced Settings</h4>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="max_steps" class="block text-sm font-medium text-gray-700 mb-2">
+                                Max Steps
+                            </label>
+                            <input
+                                type="number"
+                                id="max_steps"
+                                name="max_steps"
+                                value="50"
+                                min="10"
+                                max="100"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
+                            >
+                        </div>
+
+                        <div>
+                            <label for="max_duration" class="block text-sm font-medium text-gray-700 mb-2">
+                                Max Duration (seconds)
+                            </label>
+                            <input
+                                type="number"
+                                id="max_duration"
+                                name="max_duration"
+                                value="900"
+                                min="60"
+                                max="3600"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
+                            >
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit -->
+                <div class="flex items-center justify-end gap-4 pt-4">
+                    <a href="/jobs" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
+                        Cancel
+                    </a>
+                    <button
+                        type="submit"
+                        id="submitBtn"
+                        class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        Start Analysis
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Info Card -->
+    <div class="mt-6 card p-6 bg-indigo-50 border-indigo-100">
+        <h4 class="text-sm font-semibold text-indigo-900 mb-2">How it works</h4>
+        <ul class="text-sm text-indigo-800 space-y-2">
+            <li class="flex items-start gap-2">
+                <svg class="w-5 h-5 text-indigo-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Our AI agent will navigate to the URL like a real user
+            </li>
+            <li class="flex items-start gap-2">
+                <svg class="w-5 h-5 text-indigo-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Every action is logged with reasoning and screenshots
+            </li>
+            <li class="flex items-start gap-2">
+                <svg class="w-5 h-5 text-indigo-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                You'll receive a detailed UX report with friction points
+            </li>
+        </ul>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+    document.getElementById('analysisForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Starting...';
+
+        const formData = {
+            url: document.getElementById('url').value,
+            persona: document.getElementById('persona').value,
+            task_template: document.getElementById('task_template').value,
+            max_steps: parseInt(document.getElementById('max_steps').value),
+            max_duration: parseInt(document.getElementById('max_duration').value),
+        };
+
+        try {
+            const response = await fetch('/api/v1/analyze', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to create analysis');
+            }
+
+            const data = await response.json();
+            window.location.href = '/jobs/' + data.id;
+        } catch (error) {
+            alert('Error: ' + error.message);
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Start Analysis';
+        }
+    });
+</script>
+{% endblock %}
+{% endblock %}

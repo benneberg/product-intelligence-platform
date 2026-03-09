@@ -1,0 +1,93 @@
+# Product Intelligence Platform - Docker Compose Configuration
+
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: pip_postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-pip_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pip_password}
+      POSTGRES_DB: ${POSTGRES_DB:-pip_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-pip_user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - pip_network
+
+  # Redis (Message Broker & Result Backend)
+  redis:
+    image: redis:7-alpine
+    container_name: pip_redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - pip_network
+
+  # FastAPI Application
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    container_name: pip_api
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./app:/app/app
+      - playwright_browsers:/ms-playwright
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    networks:
+      - pip_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Celery Worker
+  worker:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.worker
+    container_name: pip_worker
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./app:/app/app
+      - playwright_browsers:/ms-playwright
+    command: celery -A app.worker.celery_app worker --loglevel=info --concurrency=2
+    networks:
+      - pip_network
+
+networks:
+  pip_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  playwright_browsers:

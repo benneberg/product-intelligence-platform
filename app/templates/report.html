@@ -1,0 +1,138 @@
+{% extends "layout.html" %}
+
+{% block title %}Report - Product Intelligence Platform{% endblock %}
+
+{% block header %}UX Analysis Report{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header Info -->
+    <div class="card p-6">
+        <div class="flex items-start justify-between">
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900">Analysis Report</h3>
+                <p class="text-sm text-gray-500 mt-1">{{ job.url }}</p>
+            </div>
+            <div class="text-right">
+                <span class="status-badge status-{{ job.status }}">{{ job.status }}</span>
+                <p class="text-sm text-gray-500 mt-2">{{ job.completed_at.strftime('%Y-%m-%d %H:%M') if job.completed_at else '' }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Metrics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="card p-6">
+            <p class="text-sm font-medium text-gray-500">Outcome</p>
+            <p class="text-2xl font-bold text-gray-900 mt-2 capitalize">{{ report.outcome.replace('_', ' ') }}</p>
+        </div>
+
+        <div class="card p-6">
+            <p class="text-sm font-medium text-gray-500">Steps Taken</p>
+            <p class="text-2xl font-bold text-gray-900 mt-2">{{ metrics.task_metrics.steps_to_completion }}</p>
+        </div>
+
+        <div class="card p-6">
+            <p class="text-sm font-medium text-gray-500">Duration</p>
+            <p class="text-2xl font-bold text-gray-900 mt-2">{{ "%.0f"|format(metrics.task_metrics.duration_seconds) }}s</p>
+        </div>
+
+        <div class="card p-6">
+            <p class="text-sm font-medium text-gray-500">Pages Visited</p>
+            <p class="text-2xl font-bold text-gray-900 mt-2">{{ metrics.task_metrics.pages_visited }}</p>
+        </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="card p-6">
+        <h4 class="text-sm font-semibold text-gray-900 mb-4">Summary</h4>
+        <p class="text-gray-700">{{ report.summary }}</p>
+    </div>
+
+    <!-- Friction Points -->
+    {% if report.friction_points %}
+    <div class="card">
+        <div class="px-6 py-4 border-b border-gray-100">
+            <h4 class="text-lg font-semibold text-gray-900">Friction Points</h4>
+        </div>
+        <div class="divide-y divide-gray-100">
+            {% for friction in report.friction_points %}
+            <div class="p-6">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-medium text-gray-900">Step {{ friction.step_number }}</span>
+                            <span class="px-2 py-0.5 text-xs font-medium rounded-full
+                                {% if friction.severity == 'high' %}bg-red-100 text-red-800
+                                {% elif friction.severity == 'medium' %}bg-amber-100 text-amber-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ friction.severity }}
+                            </span>
+                        </div>
+                        <p class="text-sm text-gray-600 mt-2">{{ friction.description }}</p>
+                        <p class="text-sm text-gray-500 mt-1">Element: {{ friction.element }}</p>
+                    </div>
+                </div>
+                <div class="mt-4 p-3 bg-gray-50 rounded-lg">
+                    <p class="text-sm font-medium text-gray-700">Recommendation</p>
+                    <p class="text-sm text-gray-600 mt-1">{{ friction.recommendation }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Positive Observations -->
+    {% if report.positive_observations %}
+    <div class="card p-6">
+        <h4 class="text-sm font-semibold text-gray-900 mb-4">Positive Observations</h4>
+        <ul class="space-y-2">
+            {% for observation in report.positive_observations %}
+            <li class="flex items-start gap-2">
+                <svg class="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <span class="text-sm text-gray-700">{{ observation }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <!-- Recommendations -->
+    {% if report.recommendations %}
+    <div class="card">
+        <div class="px-6 py-4 border-b border-gray-100">
+            <h4 class="text-lg font-semibold text-gray-900">Recommendations</h4>
+        </div>
+        <div class="divide-y divide-gray-100">
+            {% for rec in report.recommendations %}
+            <div class="p-6">
+                <div class="flex items-center justify-between">
+                    <span class="px-2 py-1 text-xs font-medium rounded-full
+                        {% if rec.priority == 'high' %}bg-red-100 text-red-800
+                        {% elif rec.priority == 'medium' %}bg-amber-100 text-amber-800
+                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                        {{ rec.priority }}
+                    </span>
+                    <span class="text-xs text-gray-500 uppercase">{{ rec.category }}</span>
+                </div>
+                <p class="text-sm text-gray-700 mt-3">{{ rec.suggestion }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Action Buttons -->
+    <div class="flex items-center gap-4">
+        <a href="/jobs/{{ job.id }}" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
+            Back to Job
+        </a>
+        <a href="/jobs/new" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-medium">
+            New Analysis
+        </a>
+    </div>
+</div>
+{% endblock %}
